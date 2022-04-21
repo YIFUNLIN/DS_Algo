@@ -1,0 +1,15 @@
+def ToH(n , A, B, C):
+    if n==1:
+        print("Disk 1 from",A,"to",B)   #最大的放在 B柱
+        return 
+    ToH(n-1, A, C, B) 
+    print("Disk",n,"from",A,"to",B)
+    ToH(n-1, C, B, A)
+          
+while True:
+    n = input("請輸入有多少盤子(y離開) : ")
+    if n == 'y':
+        break
+    else:
+        n = int(n)
+        ToH(n , 'A' , 'B' , 'C')
