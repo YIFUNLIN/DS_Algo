@@ -1,0 +1,20 @@
+def x(n):
+    N = [1]
+    for i in range(n):
+        L = N.copy()
+        for j in range(len(L)):
+            temp = str(L[j])
+            L[j] = temp
+        l = ' '.join(L).center(50)
+        print(l)
+        N.append(0)
+        N = [N[k] + N[k-1] for k in range(i+2)]
+        
+n = input("輸入層數 : ")
+while True:
+    a = x(int(n))
+    ct = input("是否結束？(按q退出) : ")
+    if ct == 'q':
+        break
+    else:
+        n = input("輸入層數 : ")
