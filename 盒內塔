@@ -1,3 +1,4 @@
+#放在B柱
 def ToH(n , A, B, C):
     if n==1:
         print("Disk 1 from",A,"to",B)   #最大的放在 B柱
@@ -13,3 +14,21 @@ while True:
     else:
         n = int(n)
         ToH(n , 'A' , 'B' , 'C')
+        
+        
+#放在C柱
+def hanoi(n , A , C , B):
+    if n == 1:
+        print("第 1 個盤子" , A , "->" , C)
+        return
+    hanoi(n-1 , A , B , C)
+    print("第" , n , "個盤子" , A , "->" , C)
+    hanoi(n-1 , B , C , A)
+while True:
+    n = input("請輸入有多少盤子(y離開) : ")
+    if n == 'y':
+        print("結束程式碼")
+        break
+    else:
+        n = int(n)
+        hanoi(n , 'A' , 'C' , 'B')
