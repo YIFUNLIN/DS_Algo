@@ -1,4 +1,6 @@
 # **Factorial N!**
+![](https://i.imgur.com/MwpsYeW.png)
+
 - iterative(Non-recrusive) 
 ```
 def Fac(i):
@@ -23,6 +25,8 @@ def Fac(i):
 遞迴執行次數= N+1次
 
 # **Fibonacci Number**
+![](https://i.imgur.com/cujoRiY.png)
+
 - iterative
 ```
 def Fib(n):
@@ -92,3 +96,93 @@ def Fib(n):
     return f[n]
 ```
 Time Complexity = O(n)
+
+
+# **Binomial Coefficient**
+Def: 
+![](https://i.imgur.com/3tGuvLc.png)
+
+
+- Recrusive
+```
+def Bin(n,m):
+    if(m == n or m == 0):
+        return 1
+    else:
+        return Bin(n-1,m) + Bin(n-1,m-1)
+```
+
+- Dynamic Programming for C(n,k)
+
+Time complexity = O(n*k)
+
+
+Auxiliary space = O(n*k)          #輔助空間
+
+![](https://i.imgur.com/1fN0PNH.png)
+
+
+```
+def bin(n,k):     #列、行
+    C = [[0 for x in range(k+1)] for x in range(n+1)]    #設定儲存空間，k定義了行(元素的數量)，n定義了 列 
+
+    for i in range(n+1):             #row
+        for j in range(min(i,k)+1):  #column，用i目前所在位置與k的長度去比，不可能會大於i，看誰比較小就可以先停止此輪的迴圈
+            if j == 0 or j == i:     
+                C[i][j] =  1
+            else:
+                C[i][j] =  C[i-1][j-1] + C[i-1][j]
+    return C[n][k]
+```
+
+GCD(A,B) 最大公因數(Greatest Common Divisor)
+
+
+<定義>
+
+![](https://i.imgur.com/g0AxLSQ.png)
+
+          
+```
+def GCD(a,b):
+    if a % b == 0:
+        return b
+    else:
+        return GCD(b,a%b)
+```
+
+Ackerman Function : A(m,n)
+
+![](https://i.imgur.com/JE0pcSt.png)
+```
+def A(m,n):
+    if m == 0:   
+        return n+1
+    elif n == 0:
+        return A(m-1,1)
+    else:
+        return A(m-1,A(m,n-1)) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
