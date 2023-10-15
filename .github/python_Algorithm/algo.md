@@ -768,6 +768,8 @@ int main(){
 | Merge Sort | O(n logn) | O(n logn)  | O(n logn)    | O(n)  |    是         |  Not Sorting in place(需額外空間儲存)   |
 
 ## Quick Sort(快速排序)
+![](https://hackmd.io/_uploads/Sk1uiXFbT.png)
+![](https://hackmd.io/_uploads/HJk5j7tZp.png)
 ```
 def partition(arr, low, high):
     pivot = arr[low]
@@ -804,6 +806,8 @@ if __name__ == '__main__':
 ```
 
 ## Merge Sort
+![](https://hackmd.io/_uploads/rkpss7t-T.png)
+
 ```
 def merge_sort(arr):
     if len(arr) > 1:
