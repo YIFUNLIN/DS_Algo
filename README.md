@@ -762,10 +762,11 @@ int main(){
 
 ```
 # 高等排序 (我用Python寫)
-|            | Best Case | Worst Case | Average Case | Space Complexity | 是否stable | 特點 |
-| ---------- | --------- | ---------- | ------------ | ---------------- | ---------- | ---- |
-| Quick Sort | O(n logn) | O(n^2)     | O(n logn)    | O(logn)~O(n)     | 否         |      |
-| Merge Sort | O(n logn) | O(n logn)  | O(n logn)    | O(n)  |    是         |  Not Sorting in place(需額外空間儲存)   |
+|            | Best Case | Worst Case | Average Case | Space Complexity | 是否stable | 特點                                 |
+| ---------- | --------- | ---------- | ------------ | ---------------- | ---------- | ------------------------------------ |
+| Quick Sort | O(n logn) | O(n^2)     | O(n logn)    | O(logn)~O(n)     | 否         |                                      |
+| Merge Sort | O(n logn) | O(n logn)  | O(n logn)    | O(n)             | 是         | Not Sorting in place(需額外空間儲存) |
+| Heap Sort     |   O(n logn)  | O(n logn) | O(n logn)| O(1)   |否   |                                      |
 
 ## Quick Sort(快速排序)
 ![](https://hackmd.io/_uploads/Sk1uiXFbT.png)
@@ -946,5 +947,463 @@ print("排序後", arr)
 
 ```
 
+# Linear-time Sorting method
+若排序技巧不是採用Comparison-based技巧時，則有機會突破omega(n logn)之限制，來到O(n)
+| Algo          | Best Case    | Worst Case | Average Case | Space Complexity | 是否stable | 特點                             |
+| ------------- | --------- | ---------- | ------------ | ---------------- | ---------- | -------------------------------- |
+| Radix Sort  | O(d*(n+r))         |    O(d*(n+r))        |  O(d*(n+r))            |   O(r*n)               |    是      |                                  |
+| Counting Sort | O(n+k)    | O(n+k)     | O(n+k)       | O(n+k)           | 是         | 常拿來作為LSD Radix Sort的副程式 |
+
+## LSD Radix Sort 基數排序 (又稱Bin Sort 或 Bucket Sort)
+![](https://hackmd.io/_uploads/B1TqsdoWa.png)
+
+### EX.
+![](https://hackmd.io/_uploads/HJHhiuoZa.png)
+![](https://hackmd.io/_uploads/BJshiOjW6.png)
+
+---
+#### Time-Complexity
+每回合都要分配n筆資料，每回合還要合併r個buckets，共d個回合
+
+=> O(d*(n+r))
+![](https://hackmd.io/_uploads/SJ2d3Oj-p.png)
+
+![](https://hackmd.io/_uploads/rJQt2djWp.png)
+每個buckets都要配到與資料量一樣多的空間，避免當全部資料都落在同一個buckets空間不夠的最糟情況
+
+配置O(n*r)
+
+![](https://hackmd.io/_uploads/B1FYn_iZp.png)
+![](https://hackmd.io/_uploads/Syy9huiWp.png =60%x)
+
+因為遵守FIFO，所以是stable
+
+![](https://hackmd.io/_uploads/rk6bCdi-T.png)
+```
+# radixSort會根據最大值的位數，依次對輸入數組 arr 的每個位數從低到高進行排序(個位、十位、百位...)
+# 在每個數位上，都會調用 countingSort 函數來進行實際的排序操作
+def radixSort(arr):
+    max1 = max(arr)  # 挑選資料中的最大值
+
+    # 初始化一個變量 exp = 1 ，用於識別要排序的當前位數
+    # 例如，當 exp 為1時，代表在個位數；exp 為10時，在十位數
+    exp = 1
+
+    # while 迴圈將持續執行，直到 exp 超過 max1 的最大數位。這樣確保了對數組的每個位數都進行了排序
+    while max1 / exp >= 1:  # 確保不會超出自身所在的位數    如 936 / 1000 = 0.936 則不會執行
+        countingSort(arr, exp)  # 對 arr 中的特定位數依序進行排序。 exp 代表當前排序的位數是多少
+        exp *= 10  # 每次乘10，可在每次迴圈中移動到下一個位數。eg.從個位數->十位數->百位數->....等等
 
 
+def countingSort(arr, exp1):  # 根據特定的位數來對array進行排序
+    n = len(arr)
+
+    # initialize
+    output = [0] * (n)  # 長度為 n 的輸出array，全初始化為0，將用來存儲排序後的資料
+    # 作為 buckets，建一個長度為10 (十進制0~9) 且初始化後的array，用來記錄（0-9)的bucket對應值的出現次數
+    count = [0] * (10)
+
+    # 初期count: 只記錄了每個數字在當前處理的位數上出現的次數
+    # eg. [0,1,2,1,2,2]，初始 count = [1,2,3,0,0,0,0,0,0,0] 0出現1次、1出現2次、2出現3次
+    for i in range(0, n):  # 遍歷每筆資料
+        index = arr[i] // exp1  # 使用 exp1 來確定每個元素當前數位的值
+        count[index % 10] += 1  # %10 確保值或落在對應的(0~9)buckets，表示各個bucket中0~9的出現次數
+
+    # 以下為更新後的count:要得到累積後次數的效果，每個元素儲存的是小於或等於當前值的元素出現數量 (後面要找值該放在哪會很快)
+    # 更新後的 count 數組會變成 count = [1,3,6,6,6,6,6,6,6,6]。這樣，我們就能知道小於或等於每個數字的元素有多少
+    # count中的 3 代表 <= 2 的值有3個
+    for i in range(1, 10):
+        # 配合array index 從0~9，實現累加的樣子  0的值給1、1的值給2、以此類推~~
+        count[i] += count[i - 1]
+
+    # Build the output array
+    i = n - 1       # 因為array從0~(n-1)而已
+    while i >= 0:   # while 迴圈是從輸入數組的末尾開始，用 count 數組來確定每個數字在輸出數組的位置
+        index = arr[i] // exp1  # 計算當前位數的值  可能在個位or十位or百位....
+
+        # 利用先前更新過的累加count，來找出資料要正確插入的位置
+        # 例如 count[7] = 5代表 <= 7的數字在此位數上總共出現了5次，所以我們就會把該值插入到index 4的位置 （array 從0開始數）
+        # (index % 10) 是為了能落在buckets範圍內(0~9)，而 -1是因為 array從0開始
+        output[count[index % 10] - 1] = arr[i]
+        count[index % 10] -= 1  # 更新 count 數組，因為該位置已被佔用
+        # eg. count 數組為 [0, 2, 2, 2, 2, 2, 2, 4, 4, 4]，這裡 count[7] = 4 意味著有四個元素的個位數小於或等於7
+        # 如果要放置一個元素，其個位數是7，我們會把它放在 output 數組的第四個位置（索引3，因為索引是從0開始的）。然後，我們需要減少 count[7] 的值，因為該位置已經被佔用了
+        # 所以執行 count[7] -= 1 之後，count 數組變為 [0, 2, 2, 2, 2, 2, 2, 3, 4, 4]。這樣，下一個個位數是7的元素會被放在 output 數組的第三個位置（索引2）
+        
+        i -= 1  # 向前移動到輸入數組的下一個元素
+
+    # 將排好的array複製回原array
+    i = 0
+    for i in range(0, len(arr)):
+        arr[i] = output[i]
+
+
+# Driver code
+arr = [170, 45, 75, 90, 802, 24, 2, 66]
+
+# Function Call
+radixSort(arr)
+
+for i in range(len(arr)):
+    print(arr[i], end=" ")
+
+# This code is contributed by Mohit Kumra
+# Edited by Patrick Gallagher
+
+```
+## Counting Sort 計數排序
+- [Data Structure版本]
+![](https://hackmd.io/_uploads/SJOZf7ffa.png)
+
+- [Algorithm版本]
+![](https://hackmd.io/_uploads/rk8XMQfzp.png)
+
+
+```
+def countingSort(array):
+    """ 初始化"""
+    size = len(array)
+    output = [0] * size  # Output大小是[1...n]
+    count = [0] * 10  # 預設鍵值範圍為[0..9]
+
+    """ 利用Count來累積次數和作為日後紀錄各元素end位置的索引"""
+    for i in range(0, size):
+        count[array[i]] += 1
+
+    for i in range(1, 10):  # 將count 拿來改作為紀錄之後output array 的end 位置
+        count[i] += count[i-1]  # 利用前一人結束的位置+自己當前的count數 = 得出自己end位置
+
+    """ 利用end位置 index，將資料放入到Output Array中"""
+    i = size - 1  # 因為count 現在是用結束位置來紀錄資料，為了求有stable特定，資料要從最後一筆由右往左填入
+    while i >= 0:  # 開始從原始陣列的末端遍歷每個元素
+        # 將資料由右往左依序放入count中找出end位置，再依(該索引位置 - 1)填入output中，因為array是從0開始數，需要減去 1 來將這個值轉換成正確的array索引
+        output[count[array[i]] - 1] = array[i]
+        count[array[i]] -= 1  # 放完要扣1，將來有相同資料再放到他的前一格
+        i -= 1
+
+    for i in range(0, size):
+        array[i] = output[i]
+
+
+data = [2, 5, 3, 0, 2, 3, 0, 3]
+print("原始資料:", data)
+countingSort(data)
+print("排序後結果:", data)
+```
+
+
+| Best Case | Worst Case | Average Case | Space Complexity | 是否stable | 特點    |
+| --------- | ---------- | ------------ | ---------------- | ---------- | --- |
+| O(n+k)    | O(n+k)     | O(n+k)       | O(n+k)           | 是         | 常拿來作為LSD Radix Sort的副程式 |
+
+---
+## Selection Problem
+Q: 如何在n個 unsorted array中找出最小的資料?
+A: 
+
+[法一]: 
+
+先在n個資料中花(n-1)次比較找出最小值，
+再花(n-2)次比較找出第二小值，花(n-3)次找出第三小值...
+
+比較次數 = (n-1) + (n-2) + (n-3) + .... +(n-i) 
+        = O(n^2)
+```
+for k to i do
+    在n-k+1 個data中找出minimum
+```
+
+[法二]:
+先將資料排序(eg. Quick Sort、Heap Sort)，return[i]，即代表第[i]小 
+花O(n logn)
+
+[法三]:
+利用Quick Sort的Partition 來實施，利用PK位置去判斷在第幾小
+1. 目標i在PK左邊: 代表皆<PK，去左邊找第i小
+2. 目標i在PK右邊: 代表皆>PK，去右邊找第(i-k)小
+
+
+| Best Case | Average Case | Worst Case |
+| -------- | -------- | -------- |
+| O(n)   | O(n)  |O(n^2)   |
+
+
+
+## Hashing
+# 還沒讀!! 
+---
+# Graph 介紹:
+https://hackmd.io/@Linnn/BJ7XI9yGa
+# Graph Traversal
+![](https://hackmd.io/_uploads/HJ52awzz6.png =90%x)
+## DFS (Depth First Search,深度先搜尋)
+![](https://hackmd.io/_uploads/SkXC3vGGp.png =90%x)
+
+![](https://hackmd.io/_uploads/H1e9rPzGT.png =50%x)
+>程式碼走訪完結果 = A B D E F C 
+#### Stack實作DFS
+```
+def dfs(start_vertex, graph_dict):
+    visited = set()   # 使用集合來保存已訪問的節點
+    stack = [start_vertex]  # python的list可做為stack
+
+    while stack:  # 當堆疊不為空時
+        vertex = stack.pop()   # pop()掉最上面的node
+        if vertex is not visited:  # 如果這個節點還未訪問
+            print(vertex, end=" ")  # 印出來
+            visited.add(vertex)     # 並標記加入到訪問過的set中
+            stack.extend(graph_dict[vertex])  # 先對該node的鄰居全都丟入stack，後續會再處理
+            # 利用list.extend()用於將一個list（或任何可迭代對象）的所有元素添加到另一個list的末端
+            # 因為是while loop 再回去前面一一pop 檢視是否visited過了
+
+
+# 測試 dfs_stack 函數
+graph_dict = {
+    'A': ['B', 'C'],
+    'B': ['A', 'D', 'E'],
+    'C': ['A', 'F'],
+    'D': ['B'],
+    'E': ['B', 'F'],
+    'F': ['C', 'E']
+}
+dfs('A', graph_dict)
+```
+---
+#### Recrusive 版 DFS
+```
+visited = set()  # 建立一個初始化集合
+graph_dict = {
+    'A': ['B', 'C'],
+    'B': ['A', 'D', 'E'],
+    'C': ['A', 'F'],
+    'D': ['B'],
+    'E': ['B', 'F'],
+    'F': ['C', 'E']
+}
+
+
+def dfs(vertex):  # vertex為目標走訪值
+    global visited, graph_dict  # 當一個區域變數要修改全域變數的值時，要宣告為Global variable才能真正修改
+    if vertex in visited:  # 如果當前節點已經被訪問過（即它已經在 visited 集合中）
+        return visited    # 則回傳 visited 集合
+    visited.add(vertex)   # 若當前節點尚未被訪問，則將其添加到 visited 集合中
+    print(vertex, end=" ")   # 印出該點
+
+    # 要去拜訪vertex的鄰居們，利用vertex去比對dict的key，當有找到時就回傳該列表
+    for neighbor in graph_dict[vertex]:
+        # neighbor會走訪該列表內的node
+        if neighbor not in visited:  # 若該點未被拜訪過，則代表它不在visited集合內
+            dfs(neighbor)            # 對它做 dfs 去拜訪他
+    return visited
+
+
+# 測試 dfs 函數
+dfs('A')
+```
+
+
+## BFS (Breadth First Search, 廣度先搜尋)
+![](https://hackmd.io/_uploads/r1ulpDfGT.png =90%x)
+
+```
+adjacency_list = {
+    'A': ['B', 'C'],
+    'B': ['A', 'D', 'E'],
+    'C': ['A', 'F'],
+    'D': ['B'],
+    'E': ['B'],
+    'F': ['C']
+}
+
+
+def BFS(start_vertex):
+    visited = set()
+    queue = [start_vertex]  # 利用list可實現Queue
+    while queue:
+        vertex = queue.pop(0)  # FIFO 利用pop(0)取出最前端元素
+        if vertex not in visited:
+            print(vertex, end=" ")
+            visited.add(vertex)
+            queue.extend(
+                neighbor for neighbor in adjacency_list[vertex] if neighbor not in visited)
+
+BFS('A')
+```
+
+## Spanning Tree (展開樹)
+為連結Graph中所有node且不產生任何cycle的tree
+![](https://hackmd.io/_uploads/SkYzUdfz6.png =70%x)
+
+一. Def: 給予一個Connected 無向圖，G=(V:頂點數,E),令S=(V:頂點數,T:tree edge)為G的一個Spanning Tree，且S的頂點集合數要與Graph相同，則S滿足:
+1. E = T  + B，T為Tree edge(拜訪時經過的邊)，B為Back edge(拜訪時沒經過的邊)
+2. 若從B中任取一邊加入到S:Spanning Tree中，必定會形成unique cycle 
+3. 在S中，任何頂點對之間，只存在一條unique simple path (除了起點與終點可能相同，其餘中間經過的點皆不同)
+
+### [Note]:
+1. G為connected <=> G必含Spanning Tree
+2. 若G 是unconnected，則必無Spanning Tree
+3. 連通的無向圖，Spanning Tree的數量 >= 1 (因為DFS、BFS的走訪不唯一，有多種走法)
+4. 若Graph有 V個node，則Spanning Tree必有(V-1)條edges   (Tree的邊數會比node少1)
+![](https://hackmd.io/_uploads/H1HXtOMGp.png =20%x)
+6. G:連通無向圖的任一兩個Spanning Tree 不一定有共同邊
+![](https://hackmd.io/_uploads/HyRyc_zzp.png)
+
+
+## Min Spanning Tree (MST,最小成本展開樹)
+一. Def: 給一個connected 無向圖，G=(V,E),邊上有cost值，則在G的所有Spanning Tree中，具有最小的邊成本總和者稱之。
+
+![](https://hackmd.io/_uploads/rJ9OrOGG6.png =90%x)
+
+### [Note]:
+1. 若G有多個相同cost的邊，則MST可能>=1棵
+2. 若G的各邊cost皆不同，則MST才唯一
+- 實際應用: 
+1. 電路布局成本最小化
+2. 連結n個城市最小的交通建設成本
+3. Router在進行Packet傳輸時所使用 eg. Spanning Tree Protocol (STP)
+
+### [Algo]:
+1. Kruskal's algo (以邊為主)
+3. Prim's algo   (以點為主)
+4. Sollin's algo (以樹邊為主)
+
+以上皆採用 Greedy Strategy
+
+---
+
+#### Kruskal's algo
+```
+import networkx as nx
+import matplotlib.pyplot as plt
+
+class Graph:
+    def __init__(self, vertices):  # 定義Graph 該class的屬性
+        self.V = vertices          # 有頂點
+        self.graph = []            # 一個空列表，用於存儲圖形的所有邊和相對應的權重。
+
+    def add_edge(self, u, v, w):   # u:起始頂點、v:結束頂點、w:權重
+        # 將每條邊的資訊，插入到二維的Graph list中，Graph將會包含多個子列表
+        self.graph.append([u, v, w])
+        # eg. [[0, 1, 4], [1, 2, 2], [2, 3, 5]] 代表有3條邊，第一條是從頂點 0 到頂點 1，權重為 4 以此類推。
+
+    # Search function
+    def find(self, parent, i):  # 找出父點用，為了要實現Disjoint Set的前置作業，要判斷兩個node是否位於相同set
+        if parent[i] == i:   # 若父點等於自己，就回傳自己
+            return i
+        return self.find(parent, parent[i])  # 父點不是自己，就recrusive 找出父點
+
+    def apply_union(self, parent, rank, x, y):  # 會在兩個node確定是不同set後才被呼叫，做union
+        # parent:是一個list，紀錄每個node的父node    rank: 該list表示每個頂點集合的深度或等級。  x 和 y: 這是我們要合併的兩個頂點
+        xroot = self.find(parent, x)  # 找出兩個頂點 x 和 y 所屬set的root
+        yroot = self.find(parent, y)
+
+        # 比較兩個根的等級(高度)
+        if rank[xroot] < rank[yroot]:  # 將level較小的set加到level較大的set上，以保持樹的高度盡可能小
+            # 如果 x 的root 等級小於 y 的root 等級，就將 x 的root的父親設為 y 的root
+            parent[xroot] = yroot
+        elif rank[xroot] > rank[yroot]:
+            parent[yroot] = xroot
+        else:   # 如果兩個集合的等級相同，任意一個作為新的root。
+            parent[yroot] = xroot
+            rank[xroot] += 1   # 相同高度tree相加，高度會多1
+
+    #  Applying Kruskal algorithm
+    def kruskal_algo(self):
+        result = []  # 用來存MST的結果
+        i, e = 0, 0  # 　i:索引、e:要添加到MST list的edge數量
+
+        # Kruskal算法需要先考慮最小權重的邊，所以先依權重對所有邊進行排序。
+        """
+        1. self.graph: 這個屬性代表著一個二維列表，每個元素都是一個列表，代表一條邊。每條邊由三個元素組成: 起點(u), 終點(v), 和權重(w)。所以一個邊可以表示為 [u, v, w]。
+        2. sorted() 函數: 這是Python的內建函數，用於對可迭代物件進行排序。
+        3. key=lambda item: item[2]: 這部分指定了排序的條件。在這裡，我們需要根據每條邊的權重(w)進行排序，而權重是每條邊的第三個元素，所以我們使用索引2（因為Python的索引是從0開始的）。
+        lambda是Python中的一個關鍵字，它允許我們定義一個小型無名的函數。在這裡，這個lambda函數將每條邊作為輸入（稱為item），並返回其權重作為輸出。"""
+        self.graph = sorted(self.graph, key=lambda item: item[2])
+
+        # 用來實現判斷是否為Disjoint set 與 實現Union
+        parent = []  # 紀錄每個node的父點
+        rank = []    # 紀錄每個 set的等級
+
+        for node in range(self.V):  # 遍歷圖中的每個頂點
+            parent.append(node)     # 先將父點初始化，將每個node的父點視為其自己的集合
+            rank.append(0)          # 儲存每個set的高度，都先初始化為0(從0開始上升)
+
+        while e < self.V - 1:        # 在MST中，邊的數量總是 V-1（V 是node的數量），會持續到我們形成 V-1 條邊為止
+            u, v, w = self.graph[i]  # 從weight小到大排序好的Graph list中，一一取出邊的資訊
+            i = i + 1                # 每取出一條edge就 + 1
+
+            # 加入此edge前，要先檢查是否兩個點在相同集合，利用find()去找他們的父節點，以此來判斷是否相同
+            x = self.find(parent, u)   # 每個node都會有一個父點，透過find()可得到 u 的父點
+            y = self.find(parent, v)   # 會得到 v 的父點
+
+            # 看u,v 的父點x,y是否相同
+            if x != y:                                 # 若是不同set，才可加到Spanning Tree中。 相同的話要放棄，不然會形成cycle
+                e = e + 1                              # 累積邊數 + 1
+                result.append([u, v, w])               # u,v 為不同set時，加到spanning Tree的邊集合result中
+                self.apply_union(parent, rank, x, y)   # 並將u,v所屬的集合作union
+
+        for u, v, weight in result:                    # 遍歷result中的所有edge，印出來
+            print("%d - %d: %d" % (u, v, weight))
+
+        return result
+
+    # 非必要
+    # Add this visualization method to your Graph class
+    def visualize_mst(self, mst_edges):
+        G = nx.Graph()
+        for u, v, weight in self.graph:
+            G.add_edge(u, v, weight=weight)
+
+        pos = nx.spring_layout(G)
+        plt.figure(figsize=(10, 6))
+
+        # Draw all edges in light gray
+        nx.draw_networkx_edges(G, pos, edge_color="gray")
+        # Draw MST edges in blue
+        nx.draw_networkx_edges(G, pos, edgelist=mst_edges,
+                               edge_color="blue", width=2)
+
+        # Draw nodes
+        nx.draw_networkx_nodes(G, pos)
+        # Draw node labels
+        nx.draw_networkx_labels(G, pos)
+        # Draw edge weights
+        edge_labels = nx.get_edge_attributes(G, 'weight')
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+
+        plt.title('MST using Kruskal Algorithm')
+        plt.show()
+
+
+g = Graph(6)
+g.add_edge(0, 1, 4)
+g.add_edge(0, 2, 4)
+g.add_edge(1, 2, 2)
+g.add_edge(1, 0, 4)
+g.add_edge(2, 0, 4)
+g.add_edge(2, 1, 2)
+g.add_edge(2, 3, 3)
+g.add_edge(2, 5, 2)
+g.add_edge(2, 4, 4)
+g.add_edge(3, 2, 3)
+g.add_edge(3, 4, 3)
+g.add_edge(4, 2, 4)
+g.add_edge(4, 3, 3)
+g.add_edge(5, 2, 2)
+g.add_edge(5, 4, 3)
+
+# Call the visualization method after kruskal_algo()
+mst_edges = g.kruskal_algo()
+g.visualize_mst(mst_edges)
+```
+---
+#### Prim's algo 
+
+
+
+## Shortest Path Problem - 
+### Dijkstar's algo
+
+### Floyd-Warshall algo
+### (看杰哥Dynamic Programming)
+http://debussy.im.nuu.edu.tw/sjchen/Algorithms_final.html
